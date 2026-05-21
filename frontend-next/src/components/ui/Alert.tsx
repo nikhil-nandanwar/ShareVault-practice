@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { Icon, type IconName } from './Icon';
 
@@ -34,10 +31,7 @@ function Alert({ variant = 'error', children, className = '' }: AlertProps) {
     const v = VARIANTS[variant];
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+        <div
             role="alert"
             className={[
                 'flex items-start gap-3 rounded-lg border px-4 py-3 text-sm',
@@ -47,7 +41,7 @@ function Alert({ variant = 'error', children, className = '' }: AlertProps) {
         >
             <Icon name={v.icon} className={['mt-0.5 h-4 w-4 shrink-0', v.iconColor].join(' ')} />
             <div className="leading-relaxed">{children}</div>
-        </motion.div>
+        </div>
     );
 }
 

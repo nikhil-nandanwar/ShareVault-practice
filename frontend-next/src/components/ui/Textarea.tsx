@@ -1,16 +1,12 @@
-import React, { type TextareaHTMLAttributes } from 'react';
+import type { TextareaHTMLAttributes } from 'react';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     invalid?: boolean;
 }
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-    { className = '', invalid = false, ...props },
-    ref,
-) {
+function Textarea({ className = '', invalid = false, ...props }: TextareaProps) {
     return (
         <textarea
-            ref={ref}
             className={[
                 'w-full rounded-lg border bg-white p-4 text-sm leading-relaxed text-slate-900 placeholder:text-slate-400',
                 'transition-colors duration-150 resize-none',
@@ -23,6 +19,6 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(function T
             {...props}
         />
     );
-});
+}
 
 export default Textarea;

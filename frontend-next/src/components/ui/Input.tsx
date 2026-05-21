@@ -1,16 +1,12 @@
-import React, { type InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes } from 'react';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     invalid?: boolean;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
-    { className = '', type = 'text', invalid = false, ...props },
-    ref,
-) {
+function Input({ className = '', type = 'text', invalid = false, ...props }: InputProps) {
     return (
         <input
-            ref={ref}
             type={type}
             className={[
                 'h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400',
@@ -24,6 +20,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
             {...props}
         />
     );
-});
+}
 
 export default Input;

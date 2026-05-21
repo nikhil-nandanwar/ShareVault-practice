@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import {
     Alert,
     Button,
@@ -77,9 +76,7 @@ function TextUploadSection() {
                         </span>
                     </div>
 
-                    <AnimatePresence>
-                        {error && <Alert variant="error">{error}</Alert>}
-                    </AnimatePresence>
+                    {error && <Alert variant="error">{error}</Alert>}
 
                     <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
                         <Button
@@ -100,14 +97,12 @@ function TextUploadSection() {
                         </Button>
                     </div>
 
-                    <AnimatePresence>
-                        {generatedCode && (
-                            <CodeDisplay
-                                code={generatedCode}
-                                helpText="Share this code with anyone — they can paste it on the Retrieve tab."
-                            />
-                        )}
-                    </AnimatePresence>
+                    {generatedCode && (
+                        <CodeDisplay
+                            code={generatedCode}
+                            helpText="Share this code with anyone — they can paste it on the Retrieve tab."
+                        />
+                    )}
                 </CardContent>
             </Card>
         </section>

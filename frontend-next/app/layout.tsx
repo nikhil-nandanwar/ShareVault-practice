@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import Script from 'next/script';
+import Navbar from '@/components/layout/Navbar';
+import Hero from '@/components/layout/Hero';
+import Footer from '@/components/layout/Footer';
+import PageContainer from '@/components/layout/PageContainer';
 import './globals.css';
 
 const inter = Inter({
@@ -28,7 +32,10 @@ const OG_DESCRIPTION =
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
-    title: TITLE,
+    title: {
+        default: TITLE,
+        template: '%s | ShareVault',
+    },
     description: DESCRIPTION,
     applicationName: 'ShareVault',
     authors: [{ name: 'ShareVault' }],
@@ -210,7 +217,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
             <body>
-                {children}
+                <div className="app-backdrop flex min-h-screen flex-col">
+                    <Navbar />
+                    <Hero />
+                    <PageContainer className="flex-1 pb-16">{children}</PageContainer>
+                    <Footer />
+                </div>
                 <Script
                     id="ld-web-application"
                     type="application/ld+json"

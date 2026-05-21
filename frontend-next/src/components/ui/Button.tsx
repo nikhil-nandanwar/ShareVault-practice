@@ -1,7 +1,4 @@
-'use client';
-
-import React, { type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { motion, type HTMLMotionProps } from 'framer-motion';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'brand' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
@@ -26,49 +23,38 @@ const SIZES: Record<ButtonSize, string> = {
     icon: 'h-10 w-10 p-0',
 };
 
-type MotionButtonProps = Omit<HTMLMotionProps<'button'>, 'children'>;
-type NativeButtonProps = Omit<
-    ButtonHTMLAttributes<HTMLButtonElement>,
-    keyof MotionButtonProps | 'children'
->;
-
-export interface ButtonProps extends MotionButtonProps, NativeButtonProps {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
     size?: ButtonSize;
     loading?: boolean;
     leftIcon?: ReactNode;
     rightIcon?: ReactNode;
-    children?: ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-    {
-        variant = 'primary',
-        size = 'md',
-        className = '',
-        disabled = false,
-        loading = false,
-        leftIcon,
-        rightIcon,
-        children,
-        ...props
-    },
-    ref,
-) {
+function Button({
+    variant = 'primary',
+    size = 'md',
+    className = '',
+    disabled = false,
+    loading = false,
+    leftIcon,
+    rightIcon,
+    children,
+    type = 'button',
+    ...props
+}: ButtonProps) {
     const isDisabled = disabled || loading;
 
     return (
-        <motion.button
-            ref={ref}
-            whileHover={isDisabled ? undefined : { y: -1 }}
-            whileTap={isDisabled ? undefined : { scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+        <button
+            type={type}
             disabled={isDisabled}
             className={[
                 'inline-flex items-center justify-center gap-2 rounded-lg font-medium',
-                'transition-colors duration-150',
+                'transition-[transform,background-color,border-color,color,box-shadow] duration-150',
+                'hover:-translate-y-px active:translate-y-0 active:scale-[0.98]',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-2',
-                'disabled:cursor-not-allowed disabled:opacity-60',
+                'disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:active:scale-100',
                 VARIANTS[variant],
                 SIZES[size],
                 className,
@@ -82,8 +68,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
             )}
             {children}
             {!loading && rightIcon}
-        </motion.button>
+        </button>
     );
-});
+}
 
 export default Button;
