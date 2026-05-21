@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     Alert,
     Button,
@@ -65,9 +64,7 @@ function RetrieveContent() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <CodeInput value={code} onChange={setCode} disabled={loading} />
 
-                        <AnimatePresence>
-                            {error && <Alert variant="error">{error}</Alert>}
-                        </AnimatePresence>
+                        {error && <Alert variant="error">{error}</Alert>}
 
                         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-center sm:gap-3">
                             {(code || content) && (
@@ -95,29 +92,22 @@ function RetrieveContent() {
                         </div>
                     </form>
 
-                    <AnimatePresence>
-                        {content && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                                className="mt-8 space-y-4 border-t border-slate-100 pt-6"
-                            >
-                                <h3 className="text-sm font-semibold text-slate-700">
-                                    {content.type === 'text' ? 'Retrieved text' : 'Retrieved files'}
-                                </h3>
-                                {content.type === 'text' ? (
-                                    <RetrievedTextPanel content={content.content} />
-                                ) : (
-                                    <RetrievedFilesPanel
-                                        code={code}
-                                        files={content.files}
-                                        onError={setError}
-                                    />
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {content && (
+                        <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
+                            <h3 className="text-sm font-semibold text-slate-700">
+                                {content.type === 'text' ? 'Retrieved text' : 'Retrieved files'}
+                            </h3>
+                            {content.type === 'text' ? (
+                                <RetrievedTextPanel content={content.content} />
+                            ) : (
+                                <RetrievedFilesPanel
+                                    code={code}
+                                    files={content.files}
+                                    onError={setError}
+                                />
+                            )}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </section>

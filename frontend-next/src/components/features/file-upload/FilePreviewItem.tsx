@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Icon } from '@/components/ui';
 import { formatBytes } from '@/utils/formatBytes';
 import { getFileCategory, type FileCategory } from '@/constants/fileTypes';
@@ -40,13 +39,7 @@ function FilePreviewItem({ file, onRemove }: FilePreviewItemProps) {
     }, [file, category]);
 
     return (
-        <motion.li
-            layout
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: 8 }}
-            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
-        >
+        <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
             <div className="flex min-w-0 items-center gap-3">
                 {previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -82,7 +75,7 @@ function FilePreviewItem({ file, onRemove }: FilePreviewItemProps) {
             >
                 <Icon name="close" className="h-4 w-4" />
             </button>
-        </motion.li>
+        </li>
     );
 }
 

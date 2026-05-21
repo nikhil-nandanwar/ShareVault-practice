@@ -1,21 +1,19 @@
-import Navbar from '@/components/layout/Navbar';
-import Hero from '@/components/layout/Hero';
-import Footer from '@/components/layout/Footer';
-import PageContainer from '@/components/layout/PageContainer';
-import ActiveView from '@/components/ActiveView';
-import { FileTypeProvider } from '@/context/FileTypeProvider';
+import type { Metadata } from 'next';
+import TextUploadSection from '@/components/features/text-upload/TextUploadSection';
 
-export default function Page() {
-    return (
-        <FileTypeProvider>
-            <div className="app-backdrop flex min-h-screen flex-col">
-                <Navbar />
-                <Hero />
-                <PageContainer className="flex-1 pb-16">
-                    <ActiveView />
-                </PageContainer>
-                <Footer />
-            </div>
-        </FileTypeProvider>
-    );
+export const metadata: Metadata = {
+    title: 'Share Text Instantly with a 4-digit Code',
+    description:
+        'Paste any text snippet, note, or link and get a 4-digit sharing code in seconds. Open it from any device — no signup required.',
+    alternates: { canonical: 'https://sharevault.vercel.app/' },
+    openGraph: {
+        url: 'https://sharevault.vercel.app/',
+        title: 'Share Text Instantly with a 4-digit Code | ShareVault',
+        description:
+            'Paste any text snippet, note, or link and get a 4-digit sharing code in seconds. Open it from any device — no signup required.',
+    },
+};
+
+export default function HomePage() {
+    return <TextUploadSection />;
 }
