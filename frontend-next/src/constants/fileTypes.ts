@@ -25,7 +25,20 @@ export const ALLOWED_FILE_TYPES: Record<FileCategory, string[]> = {
         '.dps', '.dpt', '.wpp',                              // WPS Presentation
         '.key',                                              // Apple Keynote
     ],
-    archive: ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'],
+    archive: [
+        // Common archives
+        '.zip', '.zipx', '.rar', '.7z', '.7zip',
+        // Tarballs and their combined-compression flavors
+        '.tar', '.tgz', '.tbz', '.tbz2', '.txz', '.tlz', '.tzst', '.tzo',
+        // Single-file compressors
+        '.gz', '.gzip', '.bz', '.bz2', '.bzip2', '.xz', '.lz', '.lzma',
+        '.lzo', '.zst', '.zstd', '.z', '.lha', '.lzh', '.cab', '.arj',
+        '.ace', '.uue', '.cpio', '.iso',
+        // Package / installer archives
+        '.dmg', '.deb', '.rpm', '.pkg', '.apk', '.xapk', '.ipa',
+        '.msi', '.msix', '.appx', '.appxbundle',
+        '.jar', '.war', '.ear',
+    ],
 };
 
 export const ALL_ALLOWED_EXTENSIONS = Object.values(ALLOWED_FILE_TYPES).flat();

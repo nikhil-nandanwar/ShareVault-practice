@@ -20,9 +20,11 @@ const schema = Joi.object({
     LOG_LEVEL: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent').default('info'),
 
     UPLOAD_DIR: Joi.string().default('uploads'),
-    MAX_FILE_SIZE_MB: Joi.number().integer().min(1).max(10240).default(100),
-    MAX_FILES_PER_UPLOAD: Joi.number().integer().min(1).max(100).default(20),
+    MAX_FILE_SIZE_MB: Joi.number().integer().min(1).max(102400).default(2048),
+    MAX_FILES_PER_UPLOAD: Joi.number().integer().min(1).max(1000).default(50),
     MAX_TEXT_BYTES: Joi.number().integer().min(1).max(10 * 1024 * 1024).default(1024 * 1024),
+    MAX_CHUNK_SIZE_MB: Joi.number().integer().min(1).max(100).default(8),
+    CHUNK_SESSION_TTL_MIN: Joi.number().integer().min(1).max(720).default(30),
 
     CONTENT_TTL_SECONDS: Joi.number().integer().min(60).default(24 * 60 * 60),
     CLEANUP_INTERVAL_MS: Joi.number().integer().min(60_000).default(60 * 60 * 1000),
@@ -82,6 +84,8 @@ export const config = Object.freeze({
         maxFileSizeBytes: value.MAX_FILE_SIZE_MB * 1024 * 1024,
         maxFiles: value.MAX_FILES_PER_UPLOAD,
         maxTextBytes: value.MAX_TEXT_BYTES,
+        maxChunkSizeBytes: value.MAX_CHUNK_SIZE_MB * 1024 * 1024,
+        chunkSessionTtlMs: value.CHUNK_SESSION_TTL_MIN * 60 * 1000,
     },
 
     content: {

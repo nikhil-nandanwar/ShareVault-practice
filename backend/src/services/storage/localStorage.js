@@ -79,6 +79,65 @@ export class LocalStorage {
         await fsp.rm(this.root, { recursive: true, force: true });
         await fsp.mkdir(this.root, { recursive: true });
     }
+
+    // --- Chunked upload helpers ---
+
+    #chunkDir(sessionId, fileId) {
+        return path.join(this.root, '.tmp', sessionId, fileId);
+    }
+
+    /**
+     * Open a write stream for a single chunk of a multi-part upload.
+     * The caller is responsible for ending the stream and handling errors.
+     */
+    createChunkStream(sessionId, fileId, chunkIndex) {
+        const dir = this.#chunkDir(sessionId, fileId);
+        fs.mkdirSync(dir, { recursive: true });
+        return fs.createWriteStream(path.join(dir, String(chunkIndex)));
+    }
+
+    /**
+     * Concatenate the previously-uploaded chunks (indexes 0..totalChunks-1)
+     * into a single object in permanent storage. Returns { key, size }.
+     */
+    async assembleChunks(sessionId, fileId, originalName, totalChunks) {
+        const key = this.#generateKey(originalName);
+        const dest = this.#shardedPath(key);
+        await fsp.mkdir(path.dirname(dest), { recursive: true });
+
+        const writeStream = fs.createWriteStream(dest);
+        let totalSize = 0;
+
+        try {
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkPath = path.join(this.#chunkDir(sessionId, fileId), String(i));
+                const stat = await fsp.stat(chunkPath);
+                totalSize += stat.size;
+
+                await new Promise((resolve, reject) => {
+                    const rs = fs.createReadStream(chunkPath);
+                    rs.on('error', reject);
+                    // end:false so the destination stays open for the next chunk
+                    rs.pipe(writeStream, { end: false });
+                    rs.on('end', resolve);
+                });
+            }
+            await new Promise((resolve, reject) => {
+                writeStream.end((err) => (err ? reject(err) : resolve()));
+            });
+            return { key, size: totalSize };
+        } catch (err) {
+            writeStream.destroy();
+            await fsp.unlink(dest).catch(() => {});
+            throw err;
+        }
+    }
+
+    /** Remove all temporary chunk data for a session. */
+    async cleanupSession(sessionId) {
+        const dir = path.join(this.root, '.tmp', sessionId);
+        await fsp.rm(dir, { recursive: true, force: true });
+    }
 }
 
 export default LocalStorage;

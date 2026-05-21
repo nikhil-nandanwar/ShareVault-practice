@@ -30,6 +30,11 @@ export interface FilePreviewItemProps {
 function FilePreviewItem({ file, onRemove }: FilePreviewItemProps) {
     const category = getFileCategory(file);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const withFallback = file as File & { __relativePath?: string };
+    const relativePath = file.webkitRelativePath || withFallback.__relativePath || '';
+    const folderPath = relativePath.includes('/')
+        ? relativePath.slice(0, relativePath.lastIndexOf('/'))
+        : '';
 
     useEffect(() => {
         if (category !== 'image') return;
@@ -63,6 +68,11 @@ function FilePreviewItem({ file, onRemove }: FilePreviewItemProps) {
                     <p className="truncate text-sm font-medium text-slate-800">
                         {file.name}
                     </p>
+                    {folderPath && (
+                        <p className="truncate text-xs text-indigo-600" title={folderPath}>
+                            {folderPath}/
+                        </p>
+                    )}
                     <p className="text-xs text-slate-500">{formatBytes(file.size)}</p>
                 </div>
             </div>

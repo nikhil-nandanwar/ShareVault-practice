@@ -34,6 +34,11 @@ const PATHS: Record<string, ReactNode> = {
             <path d="M14 2v6h6" />
         </>
     ),
+    folder: (
+        <>
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        </>
+    ),
     image: (
         <>
             <rect x="3" y="3" width="18" height="18" rx="2" />

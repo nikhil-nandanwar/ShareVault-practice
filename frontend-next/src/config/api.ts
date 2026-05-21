@@ -16,6 +16,11 @@ export const API_BASE_URL = publicBackend ? `${publicBackend}/api` : '/api';
 export const ENDPOINTS = {
     UPLOAD_TEXT: '/upload/text',
     UPLOAD_FILE: '/upload/file',
+    UPLOAD_INIT: '/upload/init',
+    UPLOAD_CHUNK: (sessionId: string, fileId: string, chunkIndex: number) =>
+        `/upload/chunk/${sessionId}/${fileId}/${chunkIndex}`,
+    UPLOAD_FINALIZE: (sessionId: string) => `/upload/finalize/${sessionId}`,
+    UPLOAD_ABORT: (sessionId: string) => `/upload/session/${sessionId}`,
     GET_CONTENT: (code: string) => `/content/${code}`,
     DOWNLOAD_FILE: (code: string, fileIndex: number) => `/download/${code}/${fileIndex}`,
 };

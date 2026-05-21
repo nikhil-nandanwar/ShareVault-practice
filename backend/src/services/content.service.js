@@ -23,6 +23,7 @@ export const contentService = {
         const fileMetas = files.map((f) => ({
             storageKey: f.storageKey,
             filename: f.originalName,
+            relativePath: f.relativePath || '',
             size: f.size,
             mimeType: f.mimeType,
         }));
@@ -94,6 +95,7 @@ function serialize(doc) {
         files: (doc.files || []).map((f, index) => ({
             index,
             filename: f.filename,
+            relativePath: f.relativePath || '',
             size: f.size,
             mimeType: f.mimeType,
         })),

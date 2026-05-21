@@ -23,6 +23,10 @@ export const contentController = {
         res.setHeader('Content-Length', stat.size);
         res.setHeader('Cache-Control', 'private, no-store');
         res.setHeader('X-Content-Type-Options', 'nosniff');
+        if (file.relativePath) {
+            res.setHeader('X-Relative-Path', encodeURIComponent(file.relativePath));
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Relative-Path');
+        }
 
         const stream = storage.createReadStream(file.storageKey);
 

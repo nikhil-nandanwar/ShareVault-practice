@@ -23,6 +23,7 @@ function FileUploadSection() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [generatedCode, setGeneratedCode] = useState('');
+    const [progress, setProgress] = useState(0);
 
     const totalSize = useMemo(
         () => files.reduce((sum, file) => sum + file.size, 0),
@@ -32,7 +33,7 @@ function FileUploadSection() {
     const handleFiles = (newFiles: File[]) => {
         const valid = newFiles.filter(isFileAllowed);
         if (valid.length === 0) {
-            setError('Only image, video, audio, document, and ZIP files are supported.');
+            setError('Only image, video, audio, document, and archive files are supported.');
             return;
         }
         if (valid.length < newFiles.length) {
@@ -62,16 +63,22 @@ function FileUploadSection() {
         }
         setLoading(true);
         setError('');
+        setProgress(0);
         try {
-            const { code } = await uploadFilesApi(files);
+            const { code } = await uploadFilesApi(files, ({ fraction }) => {
+                setProgress(fraction);
+            });
             setGeneratedCode(code);
             setFiles([]);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to upload files');
         } finally {
             setLoading(false);
+            setProgress(0);
         }
     };
+
+    const progressPct = Math.round(progress * 100);
 
     return (
         <section>
@@ -116,6 +123,24 @@ function FileUploadSection() {
                                 ))}
                             </ul>
 
+                            {loading && (
+                                <div
+                                    className="space-y-1"
+                                    role="progressbar"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={progressPct}
+                                >
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                        <div
+                                            className="h-full bg-indigo-500 transition-[width] duration-150"
+                                            style={{ width: `${progressPct}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-right text-xs text-slate-500">{progressPct}%</p>
+                                </div>
+                            )}
+
                             <div className="flex justify-end pt-1">
                                 <Button
                                     variant="brand"
@@ -128,7 +153,7 @@ function FileUploadSection() {
                                     }
                                 >
                                     {loading
-                                        ? 'Uploading…'
+                                        ? `Uploading… ${progressPct}%`
                                         : `Upload ${files.length} ${files.length === 1 ? 'file' : 'files'}`}
                                 </Button>
                             </div>

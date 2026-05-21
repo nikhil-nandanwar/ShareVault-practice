@@ -6,6 +6,9 @@ const fileSchema = new mongoose.Schema(
     {
         storageKey: { type: String, required: true },
         filename: { type: String, required: true, maxlength: 512 },
+        // Original path inside an uploaded folder (e.g. "docs/specs/intro.md").
+        // Empty string for plain file uploads.
+        relativePath: { type: String, default: '', maxlength: 1024 },
         size: { type: Number, required: true, min: 0 },
         mimeType: { type: String, default: 'application/octet-stream' },
     },
@@ -34,6 +37,7 @@ const contentSchema = new mongoose.Schema(
                 if (ret.files) {
                     ret.files = ret.files.map((f) => ({
                         filename: f.filename,
+                        relativePath: f.relativePath || '',
                         size: f.size,
                         mimeType: f.mimeType,
                     }));
