@@ -24,16 +24,44 @@ function CodeInput({ value, onChange, autoFocus = true, disabled = false }: Code
         if (autoFocus) inputs.current[0]?.focus();
     }, [autoFocus]);
 
+    const buildValue = (digits: Array<string | undefined>) =>
+        Array.from({ length: LENGTH }, (_, i) => digits[i] ?? '')
+            .join('')
+            .replace(/\s+$/, '');
+
     const setDigit = (index: number, digit: string) => {
-        const next = value.split('');
+        const next = Array.from({ length: LENGTH }, (_, i) => value[i] ?? '');
         next[index] = digit;
-        onChange(next.join('').slice(0, LENGTH));
+        onChange(buildValue(next));
+    };
+
+    const focusInput = (index: number) => {
+        const el = inputs.current[Math.max(0, Math.min(index, LENGTH - 1))];
+        el?.focus();
+        el?.select();
+    };
+
+    const fillFrom = (startIndex: number, digits: string) => {
+        if (!digits) return;
+        const next = Array.from({ length: LENGTH }, (_, i) => value[i] ?? '');
+        let i = startIndex;
+        for (const ch of digits) {
+            if (i >= LENGTH) break;
+            next[i] = ch;
+            i += 1;
+        }
+        onChange(buildValue(next));
+        focusInput(i);
     };
 
     const handleChange = (index: number, raw: string) => {
-        const digit = raw.replace(/\D/g, '').slice(-1);
-        if (!digit) return;
-        setDigit(index, digit);
+        const digits = raw.replace(/\D/g, '');
+        if (!digits) return;
+        if (digits.length > 1) {
+            fillFrom(index, digits.slice(0, LENGTH - index));
+            return;
+        }
+        setDigit(index, digits);
         if (index < LENGTH - 1) inputs.current[index + 1]?.focus();
     };
 
@@ -43,26 +71,24 @@ function CodeInput({ value, onChange, autoFocus = true, disabled = false }: Code
                 setDigit(index, '');
             } else if (index > 0) {
                 inputs.current[index - 1]?.focus();
-                const next = value.split('');
+                const next = Array.from({ length: LENGTH }, (_, i) => value[i] ?? '');
                 next[index - 1] = '';
-                onChange(next.join(''));
+                onChange(buildValue(next));
             }
         }
         if (e.key === 'ArrowLeft' && index > 0) inputs.current[index - 1]?.focus();
         if (e.key === 'ArrowRight' && index < LENGTH - 1) inputs.current[index + 1]?.focus();
     };
 
-    const handlePaste = (e: ClipboardEvent<HTMLDivElement>) => {
+    const handlePaste = (index: number, e: ClipboardEvent<HTMLInputElement>) => {
         e.preventDefault();
-        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, LENGTH);
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, LENGTH - index);
         if (!pasted) return;
-        onChange(pasted.padEnd(LENGTH, '').trimEnd());
-        const last = Math.min(pasted.length, LENGTH - 1);
-        inputs.current[last]?.focus();
+        fillFrom(index, pasted);
     };
 
     return (
-        <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+        <div className="flex justify-center gap-2 sm:gap-3">
             {Array.from({ length: LENGTH }).map((_, i) => (
                 <input
                     key={i}
@@ -72,11 +98,13 @@ function CodeInput({ value, onChange, autoFocus = true, disabled = false }: Code
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    maxLength={1}
+                    maxLength={LENGTH}
                     disabled={disabled}
                     value={value[i] ?? ''}
                     onChange={(e) => handleChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
+                    onPaste={(e) => handlePaste(i, e)}
+                    onFocus={(e) => e.target.select()}
                     aria-label={`Digit ${i + 1}`}
                     className={[
                         'h-16 w-14 rounded-xl border bg-white text-center font-mono text-3xl font-bold text-slate-900',
