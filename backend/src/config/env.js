@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const schema = Joi.object({
-    NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+    NODE_ENV: Joi.string().valid('development', 'production', 'test').default('production'),
     PORT: Joi.number().integer().min(1).max(65535).default(5000),
     HOST: Joi.string().default('0.0.0.0'),
 
