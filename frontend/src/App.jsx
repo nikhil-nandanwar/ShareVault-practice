@@ -4,8 +4,7 @@ import { FileTypeProvider, useFileType } from './context/FileTypeProvider'
 import TextUploadSection from './components/TextUploadSection'
 import FileUploadSection from './components/FileUploadSection'
 import RetrieveContent from './components/RetrieveContent'
-import { API_BASE_URL, ENDPOINTS } from '../config/api';
-
+import {API_BASE_URL} from './config/api';
 
 const MainContent = () => {
   const { fileType } = useFileType();
