@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import Navbar from './components/Navbar'
 import { FileTypeProvider, useFileType } from './context/FileTypeProvider'
 import TextUploadSection from './components/TextUploadSection'
 import FileUploadSection from './components/FileUploadSection'
 import RetrieveContent from './components/RetrieveContent'
-import {API_BASE_URL} from './config/api';
 
 const MainContent = () => {
   const { fileType } = useFileType();
@@ -22,14 +21,6 @@ const MainContent = () => {
 };
 
 function App() {
-  useEffect(async () => {
-    try {
-      const response = await axios.post(API_BASE_URL + "/api/hello", {
-      });
-    } catch (error) {
-
-    }
-  }, [])
   return (
     <FileTypeProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col items-center">

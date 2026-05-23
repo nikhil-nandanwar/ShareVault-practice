@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import multer from 'multer';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, relative } from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
@@ -14,23 +14,23 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const uploadsDir = join(__dirname, 'uploads');
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 app.use(cors({
-    origin: process.env.FRONTEND_URI,
+    origin: process.env.FRONTEND_URI || true,
     methods: ['GET', 'POST', 'DELETE'],
     credentials: true
 }));
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
-
-const uploadsDir = join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
+app.use('/uploads', express.static(uploadsDir));
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, uploadsDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -87,23 +87,30 @@ app.post('/api/upload/text', async (req, res) => {
     }
 });
 
-app.post('/api/upload/file', upload.single('file'), async (req, res) => {
+app.post('/api/upload/file', upload.array('files'), async (req, res) => {
     try {
-        if (!req.file) {
+        if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const code = await generateUniqueCode();
+        const savedFiles = [];
 
-        const newContent = new Content({
-            type: 'file',
-            content: req.file.path,
-            filename: req.file.originalname,
-            code
-        });
+        for (const file of req.files) {
+            const code = await generateUniqueCode();
+            const storedPath = relative(__dirname, file.path);
 
-        await newContent.save();
-        res.json({ code });
+            const newContent = new Content({
+                type: 'file',
+                content: storedPath,
+                filename: file.originalname,
+                code
+            });
+
+            await newContent.save();
+            savedFiles.push({ filename: file.originalname, code });
+        }
+
+        res.json({ codes: savedFiles });
     } catch (error) {
         res.status(500).json({ error: 'Error uploading file' });
     }

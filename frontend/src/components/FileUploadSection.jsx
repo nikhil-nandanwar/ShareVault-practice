@@ -8,7 +8,7 @@ const FileUploadSection = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [generatedCode, setGeneratedCode] = useState('');
+    const [generatedCodes, setGeneratedCodes] = useState([]);
     const fileInputRef = useRef(null);
 
     const allowedTypes = {
@@ -56,7 +56,7 @@ const FileUploadSection = () => {
 
     const removeFile = (index) => {
         setFiles(prev => prev.filter((_, i) => i !== index));
-        setGeneratedCode('');
+        setGeneratedCodes([]);
     };
 
     const getFileIcon = (file) => {
@@ -84,7 +84,7 @@ const FileUploadSection = () => {
         try {
             const formData = new FormData();
             files.forEach(file => {
-                formData.append('file', file);
+                formData.append('files', file);
             });
 
             const response = await axios.post(API_BASE_URL + ENDPOINTS.UPLOAD_FILE, formData, {
@@ -92,7 +92,8 @@ const FileUploadSection = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            setGeneratedCode(response.data.code);
+            const returnedCodes = Array.isArray(response.data.codes) ? response.data.codes : [];
+            setGeneratedCodes(returnedCodes);
             setFiles([]); // Clear the files after successful upload
         } catch (error) {
             setError(error.response?.data?.error || 'Failed to upload files');
@@ -206,16 +207,25 @@ const FileUploadSection = () => {
                     )}
 
                     <AnimatePresence>
-                        {generatedCode && (
+                        {generatedCodes.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
-                                className="mt-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100 text-center"
+                                className="mt-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100"
                             >
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Your Sharing Code</h3>
-                                <p className="text-4xl font-bold tracking-wider text-indigo-600 mb-2">{generatedCode}</p>
-                                <p className="text-sm text-gray-500">Share this code with others to let them access your file</p>
+                                <h3 className="text-lg font-medium text-gray-900 mb-4 text-center">Your Sharing Codes</h3>
+                                <div className="space-y-3">
+                                    {generatedCodes.map((item) => (
+                                        <div key={`${item.filename}-${item.code}`} className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 px-4 py-3">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{item.filename}</p>
+                                                <p className="text-xs text-gray-500">Share this code to retrieve the file</p>
+                                            </div>
+                                            <p className="text-2xl font-bold tracking-wider text-indigo-600">{item.code}</p>
+                                        </div>
+                                    ))}
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>

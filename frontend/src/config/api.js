@@ -1,4 +1,6 @@
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL + '/api';
+const backendUrl = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+
+export const API_BASE_URL = backendUrl ? `${backendUrl}/api` : '/api';
 
 export const ENDPOINTS = {
     UPLOAD_TEXT: '/upload/text',
