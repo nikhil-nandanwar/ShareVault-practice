@@ -99,8 +99,8 @@ app.post("/api/upload/file", upload.array("files"), async (req, res) => {
 
     const savedFiles = [];
 
+    const code = await generateUniqueCode();
     for (const file of req.files) {
-      const code = await generateUniqueCode();
       const storedPath = relative(__dirname, file.path);
 
       const newContent = new Content({
