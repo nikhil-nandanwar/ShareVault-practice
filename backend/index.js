@@ -59,7 +59,7 @@ const contentSchema = new mongoose.Schema({
   content: String,
   filename: String,
   code: String,
-  createdAt: { type: Date, default: Date.now, expires: 86400 },
+  createdAt: { type: Date, default: Date.now, expires: 7*86400 },
 });
 
 const Content = mongoose.model("Content", contentSchema);
