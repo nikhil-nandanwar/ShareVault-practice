@@ -1,19 +1,18 @@
-import React from 'react'
-import Navbar from './components/Navbar'
-import { FileTypeProvider, useFileType } from './context/FileTypeProvider'
-import TextUploadSection from './components/TextUploadSection'
-import FileUploadSection from './components/FileUploadSection'
-import RetrieveContent from './components/RetrieveContent'
+import Navbar from "./components/Navbar";
+import { FileTypeProvider, useFileType } from "./context/FileTypeProvider";
+import TextUploadSection from "./components/TextUploadSection";
+import FileUploadSection from "./components/FileUploadSection";
+import RetrieveContent from "./components/RetrieveContent";
 
 const MainContent = () => {
   const { fileType } = useFileType();
 
   switch (fileType) {
-    case 'Text':
+    case "Text":
       return <TextUploadSection />;
-    case 'Files':
+    case "Files":
       return <FileUploadSection />;
-    case 'Retrieve':
+    case "Retrieve":
       return <RetrieveContent />;
     default:
       return <TextUploadSection />;
@@ -32,7 +31,7 @@ function App() {
         </div>
       </div>
     </FileTypeProvider>
-  )
+  );
 }
 
-export default App
+export default App;
