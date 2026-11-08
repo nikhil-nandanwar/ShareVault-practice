@@ -8,7 +8,9 @@ const FileUploadSection = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [generatedCodes, setGeneratedCodes] = useState([]);
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
 
   const allowedTypes = {
@@ -56,7 +58,18 @@ const FileUploadSection = () => {
 
   const removeFile = (index) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
-    setGeneratedCodes([]);
+    setGeneratedCode("");
+    setUploadedFiles([]);
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
   };
 
   const getFileIcon = (file) => {
@@ -67,6 +80,7 @@ const FileUploadSection = () => {
   };
 
   const getFileSize = (size) => {
+    if (!size && size !== 0) return "";
     if (size < 1024) return size + " B";
     if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
     return (size / (1024 * 1024)).toFixed(2) + " MB";
@@ -96,10 +110,20 @@ const FileUploadSection = () => {
           },
         },
       );
-      const returnedCodes = Array.isArray(response.data.codes)
-        ? response.data.codes
-        : [];
-      setGeneratedCodes(returnedCodes);
+      const code =
+        response.data.code ||
+        (Array.isArray(response.data.codes) && response.data.codes[0]?.code) ||
+        "";
+      const uploaded =
+        response.data.files ||
+        (Array.isArray(response.data.codes) ? response.data.codes : []);
+
+      setGeneratedCode(code);
+      setUploadedFiles(
+        uploaded.length > 0
+          ? uploaded
+          : files.map((f) => ({ filename: f.name, size: f.size })),
+      );
       setFiles([]); // Clear the files after successful upload
     } catch (error) {
       setError(error.response?.data?.error || "Failed to upload files");
@@ -244,36 +268,57 @@ const FileUploadSection = () => {
           )}
 
           <AnimatePresence>
-            {generatedCodes.length > 0 && (
+            {generatedCode && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="mt-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100"
+                className="mt-8 p-6 bg-white rounded-lg shadow-sm border border-gray-100 text-center"
               >
-                <h3 className="text-lg font-medium text-gray-900 mb-4 text-center">
-                  Your Sharing Codes
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Your Sharing Code
                 </h3>
-                <div className="space-y-3">
-                  {generatedCodes.map((item) => (
-                    <div
-                      key={`${item.filename}-${item.code}`}
-                      className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {item.filename}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Share this code to retrieve the file
-                        </p>
-                      </div>
-                      <p className="text-2xl font-bold tracking-wider text-indigo-600">
-                        {item.code}
-                      </p>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <span className="text-4xl font-bold tracking-wider text-indigo-600">
+                    {generatedCode}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(generatedCode)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-300 hover:bg-gray-100 text-gray-700 transition-colors shadow-sm"
+                  >
+                    {copied ? "Copied!" : "Copy Code"}
+                  </button>
                 </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Share this code with others to let them retrieve all{" "}
+                  {uploadedFiles.length}{" "}
+                  {uploadedFiles.length === 1 ? "document" : "documents"}
+                </p>
+
+                {uploadedFiles.length > 0 && (
+                  <div className="border-t border-gray-100 pt-4 text-left max-w-md mx-auto">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                      Uploaded Documents ({uploadedFiles.length})
+                    </p>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {uploadedFiles.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-sm bg-gray-50 px-3 py-2 rounded-lg border border-gray-100"
+                        >
+                          <span className="truncate font-medium text-gray-800 pr-2">
+                            {item.filename}
+                          </span>
+                          {item.size ? (
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {getFileSize(item.size)}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -7,10 +7,10 @@ import { dirname, join, relative } from "path";
 import fs from "fs";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,12 +54,20 @@ mongoose
     throw err;
   });
 
+const fileItemSchema = new mongoose.Schema({
+  filename: { type: String, required: true },
+  path: { type: String, required: true },
+  size: { type: Number },
+  mimetype: { type: String },
+});
+
 const contentSchema = new mongoose.Schema({
-  type: String,
+  type: { type: String, required: true },
   content: String,
   filename: String,
-  code: String,
-  createdAt: { type: Date, default: Date.now, expires: 7*86400 },
+  files: [fileItemSchema],
+  code: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: 7 * 86400 },
 });
 
 const Content = mongoose.model("Content", contentSchema);
@@ -97,25 +105,34 @@ app.post("/api/upload/file", upload.array("files"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const savedFiles = [];
-
     const code = await generateUniqueCode();
-    for (const file of req.files) {
-      const storedPath = relative(__dirname, file.path);
+    const fileRecords = req.files.map((file) => ({
+      filename: file.originalname,
+      path: relative(__dirname, file.path),
+      size: file.size,
+      mimetype: file.mimetype,
+    }));
 
-      const newContent = new Content({
-        type: "file",
-        content: storedPath,
-        filename: file.originalname,
-        code,
-      });
+    const newContent = new Content({
+      type: "file",
+      code,
+      files: fileRecords,
+      content: fileRecords[0].path,
+      filename: fileRecords[0].filename,
+    });
 
-      await newContent.save();
-      savedFiles.push({ filename: file.originalname, code });
-    }
+    await newContent.save();
 
-    res.json({ codes: savedFiles });
+    res.json({
+      code,
+      files: newContent.files.map((f) => ({
+        id: f._id.toString(),
+        filename: f.filename,
+        size: f.size,
+      })),
+    });
   } catch (error) {
+    console.error("Error uploading file:", error);
     res.status(500).json({ error: "Error uploading file" });
   }
 });
@@ -123,48 +140,116 @@ app.post("/api/upload/file", upload.array("files"), async (req, res) => {
 app.get("/api/content/:code", async (req, res) => {
   try {
     const { code } = req.params;
-    const content = await Content.findOne({ code });
+    const contents = await Content.find({ code });
 
-    if (!content) {
+    if (!contents || contents.length === 0) {
       return res.status(404).json({ error: "Content not found" });
     }
 
-    res.json(content);
+    const first = contents[0];
+    if (first.type === "text") {
+      return res.json({
+        type: "text",
+        content: first.content,
+        code: first.code,
+        createdAt: first.createdAt,
+      });
+    }
+
+    const files = [];
+    for (const record of contents) {
+      if (record.files && record.files.length > 0) {
+        for (const f of record.files) {
+          files.push({
+            id: f._id ? f._id.toString() : f.path,
+            filename: f.filename,
+            size: f.size,
+            mimetype: f.mimetype,
+          });
+        }
+      } else if (record.filename || record.content) {
+        files.push({
+          id: record._id.toString(),
+          filename: record.filename || "file",
+          size: null,
+          mimetype: null,
+        });
+      }
+    }
+
+    res.json({
+      type: "file",
+      code: first.code,
+      files,
+      filename: files[0]?.filename || "",
+      createdAt: first.createdAt,
+    });
   } catch (error) {
+    console.error("Error retrieving content:", error);
     res.status(500).json({ error: "Error retrieving content" });
   }
 });
 
 // Download route
-app.get("/api/download/:code", async (req, res) => {
+app.get("/api/download/:code/:fileId?", async (req, res) => {
   try {
     const { code } = req.params;
-    const content = await Content.findOne({ code });
+    const fileId = req.params.fileId || req.query.fileId;
+    const contents = await Content.find({ code });
 
-    if (!content) {
+    if (!contents || contents.length === 0) {
       return res.status(404).json({ error: "Content not found" });
     }
 
-    if (content.type !== "file") {
-      return res.status(400).json({ error: "Content is not a file" });
+    let targetFile = null;
+
+    for (const record of contents) {
+      if (record.files && record.files.length > 0) {
+        if (fileId) {
+          const match = record.files.find(
+            (f) =>
+              (f._id && f._id.toString() === fileId) ||
+              f.filename === fileId ||
+              f.path === fileId,
+          );
+          if (match) {
+            targetFile = match;
+            break;
+          }
+        } else {
+          targetFile = record.files[0];
+          break;
+        }
+      } else if (record.filename || record.content) {
+        if (!fileId || record._id.toString() === fileId || record.filename === fileId) {
+          targetFile = {
+            path: record.content,
+            filename: record.filename,
+          };
+          break;
+        }
+      }
     }
 
-    // Get the absolute path to the file
-    const filePath = join(__dirname, content.content);
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
+    if (!targetFile) {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Set headers for file download
+    const filePath = join(__dirname, targetFile.path);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found on server" });
+    }
+
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${encodeURIComponent(content.filename)}"`,
+      `attachment; filename="${encodeURIComponent(targetFile.filename)}"`,
     );
-    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader(
+      "Content-Type",
+      targetFile.mimetype || "application/octet-stream",
+    );
 
-    // Stream the file
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
   } catch (error) {

@@ -9,6 +9,8 @@ const RetrieveContent = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,11 +34,12 @@ const RetrieveContent = () => {
     }
   };
 
-  const downloadFile = async () => {
+  const downloadFile = async (fileId, preferredFilename) => {
     try {
       setError("");
+      setDownloadingId(fileId || preferredFilename || "current");
       const response = await axios.get(
-        `${API_BASE_URL}${ENDPOINTS.DOWNLOAD_FILE(code)}`,
+        `${API_BASE_URL}${ENDPOINTS.DOWNLOAD_FILE(code, fileId)}`,
         {
           responseType: "blob",
         },
@@ -44,7 +47,7 @@ const RetrieveContent = () => {
 
       // Create a blob URL
       const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
+        type: response.headers["content-type"] || "application/octet-stream",
       });
       const url = window.URL.createObjectURL(blob);
 
@@ -54,7 +57,7 @@ const RetrieveContent = () => {
 
       // Get filename from content-disposition header or use a default
       const contentDisposition = response.headers["content-disposition"];
-      let filename = content?.filename || "downloaded-file";
+      let filename = preferredFilename || content?.filename || "downloaded-file";
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(
           /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
@@ -79,6 +82,29 @@ const RetrieveContent = () => {
         error.response?.data?.error ||
           "Failed to download file. Please try again.",
       );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const downloadAllFiles = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    setDownloadingAll(true);
+    setError("");
+
+    try {
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        await downloadFile(file.id, file.filename);
+        if (i < fileList.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
+      }
+    } catch (err) {
+      console.error("Error downloading all files:", err);
+      setError("Failed to download some files.");
+    } finally {
+      setDownloadingAll(false);
     }
   };
 
@@ -91,6 +117,29 @@ const RetrieveContent = () => {
       console.error("Failed to copy text:", err);
     }
   };
+
+  const getFileIcon = (filename = "") => {
+    const ext = "." + filename.split(".").pop().toLowerCase();
+    const videoExts = [".mp4", ".avi", ".mov", ".mkv", ".webm"];
+    const audioExts = [".mp3", ".wav", ".ogg", ".m4a"];
+    if (videoExts.includes(ext)) return "🎥";
+    if (audioExts.includes(ext)) return "🎵";
+    return "📄";
+  };
+
+  const formatFileSize = (size) => {
+    if (!size && size !== 0) return "";
+    if (size < 1024) return size + " B";
+    if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
+    return (size / (1024 * 1024)).toFixed(2) + " MB";
+  };
+
+  const fileList =
+    content?.files && content.files.length > 0
+      ? content.files
+      : content?.filename
+        ? [{ id: "", filename: content.filename, size: null }]
+        : [];
 
   return (
     <motion.div
@@ -169,19 +218,64 @@ const RetrieveContent = () => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between bg-gray-50 py-4 rounded-lg">
-                  <div className="w-1/2 overflow-hidden">
-                    <p className="text-sm font-medium text-gray-900">
-                      {content.filename}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">
+                      {fileList.length}{" "}
+                      {fileList.length === 1 ? "document" : "documents"} retrieved
                     </p>
-                    <p className="text-xs text-gray-500">Click to download</p>
+                    {fileList.length > 1 && (
+                      <button
+                        onClick={() => downloadAllFiles(fileList)}
+                        disabled={downloadingAll}
+                        className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-emerald-500 text-white rounded-lg hover:from-indigo-600 hover:to-emerald-600 font-medium text-sm transition-all shadow-sm disabled:opacity-50"
+                      >
+                        {downloadingAll ? "Downloading All..." : "Download All"}
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => downloadFile(content.content)}
-                    className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
-                  >
-                    Download
-                  </button>
+
+                  <div className="space-y-3">
+                    {fileList.map((file, index) => {
+                      const fileKey = file.id || file.filename || index;
+                      const isDownloadingThis =
+                        downloadingId === file.id ||
+                        downloadingId === file.filename;
+                      return (
+                        <div
+                          key={fileKey}
+                          className="flex items-center justify-between p-3.5 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3 min-w-0 pr-3">
+                            <span className="text-2xl flex-shrink-0">
+                              {getFileIcon(file.filename)}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {file.filename}
+                              </p>
+                              {file.size ? (
+                                <p className="text-xs text-gray-500">
+                                  {formatFileSize(file.size)}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-gray-500">
+                                  Click to download
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => downloadFile(file.id, file.filename)}
+                            disabled={isDownloadingThis}
+                            className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-medium transition-colors flex-shrink-0 disabled:opacity-50"
+                          >
+                            {isDownloadingThis ? "Downloading..." : "Download"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </motion.div>
