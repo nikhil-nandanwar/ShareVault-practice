@@ -296,11 +296,11 @@ const FileUploadSection = () => {
                 </p>
 
                 {uploadedFiles.length > 0 && (
-                  <div className="border-t border-gray-100 pt-4 text-left max-w-md mx-auto">
+                  <div className="border-t border-gray-100 pt-4 text-left max-w-full mx-auto">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
                       Uploaded Documents ({uploadedFiles.length})
                     </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    <div className="space-y-2  pr-1">
                       {uploadedFiles.map((item, idx) => (
                         <div
                           key={idx}
